@@ -62,6 +62,10 @@ interface ResetCreditLike {
 /** Row id used by the xAI weekly limit, which has no id of its own. */
 export const XAI_WEEKLY_ROW_ID = 'xai:weekly';
 
+/** Row ids used by the Command Code 5-hour and weekly limits. */
+export const COMMANDCODE_5H_ROW_ID = 'commandcode:5h';
+export const COMMANDCODE_WEEKLY_ROW_ID = 'commandcode:weekly';
+
 const isUsableMs = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
@@ -127,6 +131,26 @@ export function collectQuotaRowInstants(
 
   if (provider === 'kimi') {
     return collectRows((quota as { rows?: WindowLike[] }).rows ?? [], 'row');
+  }
+
+  if (provider === 'commandcode') {
+    const q = (
+      quota as {
+        quota?: {
+          fiveHour?: { resetAt?: number | null } | null;
+          weekly?: { resetAt?: number | null } | null;
+        } | null;
+      }
+    )?.quota;
+    if (!q) return [];
+    const out: QuotaRowInstant[] = [];
+    if (isUsableMs(q.fiveHour?.resetAt) && q.fiveHour.resetAt > 0) {
+      out.push({ rowId: COMMANDCODE_5H_ROW_ID, atMs: q.fiveHour.resetAt, kind: 'window' });
+    }
+    if (isUsableMs(q.weekly?.resetAt) && q.weekly.resetAt > 0) {
+      out.push({ rowId: COMMANDCODE_WEEKLY_ROW_ID, atMs: q.weekly.resetAt, kind: 'window' });
+    }
+    return out;
   }
 
   return [];

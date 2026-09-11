@@ -10,6 +10,7 @@ export interface ApiCallRequest {
   authIndex?: string;
   method: string;
   url: string;
+  proxy_url?: string;
   header?: Record<string, string>;
   data?: string;
 }

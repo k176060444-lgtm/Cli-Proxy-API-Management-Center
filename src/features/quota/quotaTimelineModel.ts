@@ -488,5 +488,58 @@ export function buildTimelineLane(input: TimelineLaneInput): TimelineLane {
     };
   }
 
+  if (provider === 'commandcode') {
+    const q = (
+      quota as {
+        quota?: {
+          fiveHour?: { used: number; cap: number; resetAt: number | null } | null;
+          weekly?: { used: number; cap: number; resetAt: number | null } | null;
+        } | null;
+      }
+    )?.quota;
+    if (!q) return empty;
+
+    const windows: WindowLike[] = [];
+    const limits: TimelineLimit[] = [];
+
+    if (q.fiveHour && typeof q.fiveHour.resetAt === 'number' && q.fiveHour.resetAt > 0) {
+      const remaining =
+        q.fiveHour.cap > 0
+          ? clampPercent(Math.round((Math.max(0, q.fiveHour.cap - q.fiveHour.used) / q.fiveHour.cap) * 100))
+          : null;
+      windows.push({ resetAtMs: q.fiveHour.resetAt, periodHours: 5 });
+      if (remaining !== null) {
+        limits.push({ label: '5h', remaining });
+      }
+    }
+
+    if (q.weekly && typeof q.weekly.resetAt === 'number' && q.weekly.resetAt > 0) {
+      const remaining =
+        q.weekly.cap > 0
+          ? clampPercent(Math.round((Math.max(0, q.weekly.cap - q.weekly.used) / q.weekly.cap) * 100))
+          : null;
+      windows.push({ resetAtMs: q.weekly.resetAt, periodHours: 168 });
+      if (remaining !== null) {
+        limits.push({ label: 'Weekly', remaining });
+      }
+    }
+
+    const chosen = pickLaneWindow(windows, maxPeriodHours);
+    if (!chosen) return empty;
+
+    const chosenRemaining =
+      chosen.periodHours === 5
+        ? limits.find((l) => l.label === '5h')?.remaining ?? null
+        : limits.find((l) => l.label === 'Weekly')?.remaining ?? null;
+
+    return {
+      ...empty,
+      anchorMs: chosen.resetAtMs ?? null,
+      periodHours: chosen.periodHours ?? null,
+      remaining: chosenRemaining,
+      limits,
+    };
+  }
+
   return empty;
 }

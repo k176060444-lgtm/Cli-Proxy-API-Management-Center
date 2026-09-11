@@ -397,3 +397,69 @@ export interface XaiQuotaState {
   error?: string;
   errorStatus?: number;
 }
+
+// Command Code (Go) API payload & state types
+export interface CommandCodeWindowLimit {
+  used: number;
+  cap: number;
+  resetAt: number | null; // epoch ms
+}
+
+export interface CommandCodeBillingCreditsPayload {
+  credits?: {
+    monthlyCredits?: number;
+  };
+  windowLimits?: {
+    fiveHour?: {
+      used?: number;
+      cap?: number;
+      resetAt?: number;
+    };
+    weekly?: {
+      used?: number;
+      cap?: number;
+      resetAt?: number;
+    };
+  };
+  limited?: boolean;
+}
+
+export interface CommandCodeSubscriptionPayload {
+  data?: {
+    status?: string;
+    planId?: string;
+    currentPeriodEnd?: string;
+    canceledAt?: string | null;
+  };
+}
+
+export interface CommandCodeUsageSummaryPayload {
+  completedCount?: number;
+  totalCost?: number;
+  totalTokensIn?: number;
+  totalTokensOut?: number;
+}
+
+export interface CommandCodeQuotaSummary {
+  planId: string | null;
+  status: string | null;
+  currentPeriodEnd: string | null;
+  monthlyCredits: number | null;
+  monthlyCap: number;
+  fiveHour: CommandCodeWindowLimit | null;
+  weekly: CommandCodeWindowLimit | null;
+  summary: {
+    completedCount: number | null;
+    totalCost: number | null;
+    totalTokensIn: number | null;
+    totalTokensOut: number | null;
+  } | null;
+}
+
+export interface CommandCodeQuotaState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  quota: CommandCodeQuotaSummary | null;
+  error?: string;
+  errorStatus?: number;
+}
+

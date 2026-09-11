@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { authFilesApi } from '@/services/api';
+import { apiClient, authFilesApi } from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Select } from '@/components/ui/Select';
@@ -81,8 +81,64 @@ export function QuotaPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await authFilesApi.list();
-      setFiles(data?.files || []);
+      const [authFilesData, cmdcKeysData] = await Promise.allSettled([
+        authFilesApi.list(),
+        apiClient.get<Record<string, unknown>>('/commandcode-api-key'),
+      ]);
+
+      const diskFiles: AuthFileItem[] =
+        authFilesData.status === 'fulfilled' && authFilesData.value?.files
+          ? authFilesData.value.files
+          : [];
+
+      let cmdcFiles: AuthFileItem[] = [];
+      if (cmdcKeysData.status === 'fulfilled' && cmdcKeysData.value) {
+        const rawList = cmdcKeysData.value['commandcode-api-key'];
+        if (Array.isArray(rawList)) {
+          const existingKeys = new Set(
+            diskFiles
+              .filter((f) => f.provider === 'commandcode' || f.type === 'commandcode')
+              .map((f) => (f as Record<string, unknown>)['api_key'] || f.name)
+          );
+
+          const ACCOUNT_LABELS: Record<string, string> = {
+            user_2C4NcsAzVc8MhLJDRaDsEAqwougtXcQSAm7aEj1eXUavBW7ztWXLVEnPf86SoNR9m96AjB3kaqqKWZ1XA1YVbGg9:
+              '176060444@qq.com',
+            user_5aDGg3PRHxj36cyvvUzW6uvRnNhCjjL6xqqauHb5j7jbzLvM5zzWSvWg9NCds1XwEnL6hDy3s9v2dYqGBrQB663R:
+              'kingjinjing@qq.com',
+          };
+
+          cmdcFiles = rawList
+            .map((rawItem: Record<string, unknown>, idx: number) => {
+              const apiKey = String(rawItem['api-key'] ?? rawItem.apiKey ?? '').trim();
+              if (!apiKey || existingKeys.has(apiKey)) return null;
+
+              const label =
+                ACCOUNT_LABELS[apiKey] ||
+                (apiKey.length > 12 ? `${apiKey.slice(0, 8)}...${apiKey.slice(-4)}` : `cmdc-${idx + 1}`);
+              const name = `commandcode-${label}`;
+
+              const excluded = Array.isArray(rawItem['excluded-models']) ? rawItem['excluded-models'] : [];
+              const isDisabled = excluded.includes('*');
+
+              return {
+                name,
+                id: name,
+                provider: 'commandcode',
+                type: 'commandcode',
+                label,
+                api_key: apiKey,
+                proxy_url: String(rawItem['proxy-url'] ?? rawItem.proxyUrl ?? '').trim(),
+                disabled: false,
+                is_excluded: isDisabled,
+                status: 'active',
+              } as unknown as AuthFileItem;
+            })
+            .filter((item): item is AuthFileItem => item !== null);
+        }
+      }
+
+      setFiles([...diskFiles, ...cmdcFiles]);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('notification.refresh_failed');
       setError(message);
@@ -103,6 +159,7 @@ export function QuotaPage() {
   const antigravityQuota = useQuotaStore((state) => state.antigravityQuota);
   const claudeQuota = useQuotaStore((state) => state.claudeQuota);
   const codexQuota = useQuotaStore((state) => state.codexQuota);
+  const commandcodeQuota = useQuotaStore((state) => state.commandcodeQuota);
   const kimiQuota = useQuotaStore((state) => state.kimiQuota);
   const xaiQuota = useQuotaStore((state) => state.xaiQuota);
 
@@ -112,10 +169,11 @@ export function QuotaPage() {
         antigravity: antigravityQuota,
         claude: claudeQuota,
         codex: codexQuota,
+        commandcode: commandcodeQuota,
         kimi: kimiQuota,
         xai: xaiQuota,
       }) as unknown as Record<QuotaProviderType, Record<string, QuotaCardState>>,
-    [antigravityQuota, claudeQuota, codexQuota, kimiQuota, xaiQuota]
+    [antigravityQuota, claudeQuota, codexQuota, commandcodeQuota, kimiQuota, xaiQuota]
   );
 
   const getQuota = useCallback(
