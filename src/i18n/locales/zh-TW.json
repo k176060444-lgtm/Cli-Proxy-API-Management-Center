@@ -531,6 +531,11 @@
     "monthly_credits": "月度配額",
     "remaining_percent": "剩餘 {{percent}}",
     "reset_at": "重設 {{time}}",
+    "refreshes_in": "{{time}}重新整理",
+    "quota_sufficient": "額度充足",
+    "used_amount": "已用 {{amount}}",
+    "window_ready": "視窗就緒",
+    "cycle_ready": "週期就緒",
     "plan_label": "方案",
     "summary_prefix": "本週期統計",
     "summary_format": "請求 {{count}} 次 · 消費 {{cost}} · Tokens 入 {{in}} / 出 {{out}}"

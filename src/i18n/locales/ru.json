@@ -518,6 +518,11 @@
     "monthly_credits": "Месячные кредиты",
     "remaining_percent": "Осталось {{percent}}",
     "reset_at": "Сброс {{time}}",
+    "refreshes_in": "сброс {{time}}",
+    "quota_sufficient": "Лимит полон",
+    "used_amount": "Исп. {{amount}}",
+    "window_ready": "Окно готово",
+    "cycle_ready": "Цикл готов",
     "plan_label": "План",
     "summary_prefix": "Текущий период",
     "summary_format": "Запросов: {{count}} · Стоимость: {{cost}} · Токены: вход {{in}} / выход {{out}}"

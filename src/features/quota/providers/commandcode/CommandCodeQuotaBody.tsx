@@ -8,7 +8,6 @@ import type { CommandCodeQuotaState } from '@/types';
 import { buildResetDisplay, formatQuotaResetTime, parseIsoToMs } from '@/utils/quota';
 import { useNow } from '@/hooks/useNow';
 import { QuotaMeter } from '../../components/QuotaMeter';
-import { QuotaResetLabel } from '../../components/QuotaResetLabel';
 import { collectQuotaRowInstants, pickUrgentRowId } from '../../resetSchedule';
 import type { QuotaBodyProps } from '../../types';
 
@@ -64,7 +63,8 @@ export function CommandCodeQuotaBody({ quota, classes }: QuotaBodyProps<CommandC
   const monthlyCap = summaryData.monthlyCap > 0 ? summaryData.monthlyCap : 10;
   const monthlyRemaining = summaryData.monthlyCredits ?? 0;
   const monthlyPercent = Math.max(0, Math.min(100, (monthlyRemaining / monthlyCap) * 100));
-  const monthlyAmountLabel = `${formatUsd(monthlyRemaining)} / ${formatUsd(monthlyCap)}`;
+  const monthlyUsed = Math.max(0, monthlyCap - monthlyRemaining);
+  const monthlyAmountLabel = `${formatUsd(monthlyUsed)} / ${formatUsd(monthlyCap)}`;
   const monthlyResetIso = summaryData.currentPeriodEnd;
   const monthlyResetLabel = monthlyResetIso ? formatQuotaResetTime(monthlyResetIso) : null;
   const monthlyResetDisplay = monthlyResetIso
@@ -151,13 +151,37 @@ export function CommandCodeQuotaBody({ quota, classes }: QuotaBodyProps<CommandC
                   percent: formatPercent(fiveHourRemainingPercent),
                 })}
               </span>
-              <span className={classes.quotaAmount}>{fiveHourAmountLabel}</span>
-              {fiveHourResetDisplay && (
-                <QuotaResetLabel display={fiveHourResetDisplay} classes={classes} soon={fiveHourSoon} />
+              {fiveHourResetDisplay?.relative ? (
+                <span
+                  className={
+                    fiveHourSoon
+                      ? `${classes.quotaResetRelative} ${classes.quotaResetRelativeSoon}`
+                      : classes.quotaResetRelative
+                  }
+                  title={fiveHourSoon ? t('quota_management.soonest_row_hint') : undefined}
+                >
+                  {t('commandcode_quota.refreshes_in', {
+                    time: fiveHourResetDisplay.relative,
+                  })}
+                </span>
+              ) : (
+                <span className={classes.quotaResetRelative}>
+                  {t('commandcode_quota.quota_sufficient')}
+                </span>
               )}
             </div>
           </div>
           <QuotaMeter percent={fiveHourRemainingPercent} classes={classes} index={0} />
+          <div className={classes.quotaSubRow}>
+            <span className={classes.quotaAmount}>
+              {t('commandcode_quota.used_amount', { amount: fiveHourAmountLabel })}
+            </span>
+            <span className={classes.quotaSubDate}>
+              {fiveHourResetDisplay?.absolute
+                ? fiveHourResetDisplay.absolute
+                : t('commandcode_quota.window_ready')}
+            </span>
+          </div>
         </div>
       )}
 
@@ -175,13 +199,37 @@ export function CommandCodeQuotaBody({ quota, classes }: QuotaBodyProps<CommandC
                   percent: formatPercent(weeklyRemainingPercent),
                 })}
               </span>
-              <span className={classes.quotaAmount}>{weeklyAmountLabel}</span>
-              {weeklyResetDisplay && (
-                <QuotaResetLabel display={weeklyResetDisplay} classes={classes} soon={weeklySoon} />
+              {weeklyResetDisplay?.relative ? (
+                <span
+                  className={
+                    weeklySoon
+                      ? `${classes.quotaResetRelative} ${classes.quotaResetRelativeSoon}`
+                      : classes.quotaResetRelative
+                  }
+                  title={weeklySoon ? t('quota_management.soonest_row_hint') : undefined}
+                >
+                  {t('commandcode_quota.refreshes_in', {
+                    time: weeklyResetDisplay.relative,
+                  })}
+                </span>
+              ) : (
+                <span className={classes.quotaResetRelative}>
+                  {t('commandcode_quota.quota_sufficient')}
+                </span>
               )}
             </div>
           </div>
           <QuotaMeter percent={weeklyRemainingPercent} classes={classes} index={1} />
+          <div className={classes.quotaSubRow}>
+            <span className={classes.quotaAmount}>
+              {t('commandcode_quota.used_amount', { amount: weeklyAmountLabel })}
+            </span>
+            <span className={classes.quotaSubDate}>
+              {weeklyResetDisplay?.absolute
+                ? weeklyResetDisplay.absolute
+                : t('commandcode_quota.cycle_ready')}
+            </span>
+          </div>
         </div>
       )}
 
@@ -195,13 +243,30 @@ export function CommandCodeQuotaBody({ quota, classes }: QuotaBodyProps<CommandC
                 percent: formatPercent(monthlyPercent),
               })}
             </span>
-            <span className={classes.quotaAmount}>{monthlyAmountLabel}</span>
-            {monthlyResetDisplay && (
-              <QuotaResetLabel display={monthlyResetDisplay} classes={classes} />
+            {monthlyResetDisplay?.relative ? (
+              <span className={classes.quotaResetRelative}>
+                {t('commandcode_quota.refreshes_in', {
+                  time: monthlyResetDisplay.relative,
+                })}
+              </span>
+            ) : (
+              <span className={classes.quotaResetRelative}>
+                {t('commandcode_quota.quota_sufficient')}
+              </span>
             )}
           </div>
         </div>
         <QuotaMeter percent={monthlyPercent} classes={classes} index={2} />
+        <div className={classes.quotaSubRow}>
+          <span className={classes.quotaAmount}>
+            {t('commandcode_quota.used_amount', { amount: monthlyAmountLabel })}
+          </span>
+          <span className={classes.quotaSubDate}>
+            {monthlyResetDisplay?.absolute
+              ? monthlyResetDisplay.absolute
+              : t('commandcode_quota.cycle_ready')}
+          </span>
+        </div>
       </div>
 
       {/* 周期用量汇总小字 */}

@@ -138,6 +138,25 @@ button.quotaMessageAction {
   color: var(--text-secondary);
 }
 
+.quotaSubRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: $font-mono;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  padding: 0 1px;
+  margin-top: 1px;
+}
+
+.quotaSubDate {
+  color: var(--text-quaternary);
+  font-family: $font-mono;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- 进度条（QuotaProgressBar 注入，Meter 风 6px 轨道） ---------- */
 
 .quotaBar {

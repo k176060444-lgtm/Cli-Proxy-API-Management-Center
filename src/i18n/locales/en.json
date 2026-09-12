@@ -531,6 +531,11 @@
     "monthly_credits": "Monthly Credits",
     "remaining_percent": "{{percent}} remaining",
     "reset_at": "Resets {{time}}",
+    "refreshes_in": "refreshes {{time}}",
+    "quota_sufficient": "Quota full",
+    "used_amount": "Used {{amount}}",
+    "window_ready": "Window ready",
+    "cycle_ready": "Cycle ready",
     "plan_label": "Plan",
     "summary_prefix": "Current Period",
     "summary_format": "{{count}} requests · Cost {{cost}} · Tokens In {{in}} / Out {{out}}"

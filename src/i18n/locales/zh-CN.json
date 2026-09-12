@@ -531,6 +531,11 @@
     "monthly_credits": "月度额度",
     "remaining_percent": "剩余 {{percent}}",
     "reset_at": "重置 {{time}}",
+    "refreshes_in": "{{time}}刷新",
+    "quota_sufficient": "额度充足",
+    "used_amount": "已用 {{amount}}",
+    "window_ready": "窗口就绪",
+    "cycle_ready": "周期就绪",
     "plan_label": "套餐",
     "summary_prefix": "本周期统计",
     "summary_format": "请求 {{count}} 次 · 消费 {{cost}} · Tokens 入 {{in}} / 出 {{out}}"

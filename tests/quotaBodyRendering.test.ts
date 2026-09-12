@@ -13,11 +13,12 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import i18n from '@/i18n';
 import { CodexQuotaBody } from '@/features/quota/providers/codex/CodexQuotaBody';
 import { ClaudeQuotaBody } from '@/features/quota/providers/claude/ClaudeQuotaBody';
+import { CommandCodeQuotaBody } from '@/features/quota/providers/commandcode/CommandCodeQuotaBody';
 import { KimiQuotaBody } from '@/features/quota/providers/kimi/KimiQuotaBody';
 import { QUOTA_CLASS_KEYS, bindQuotaClasses } from '@/features/quota/types';
 import { formatInstantShort } from '@/utils/quota';
 import { DAY_MS, HOUR_MS } from '@/utils/time/durations';
-import type { ClaudeQuotaState, CodexQuotaState, KimiQuotaState } from '@/types';
+import type { ClaudeQuotaState, CodexQuotaState, CommandCodeQuotaState, KimiQuotaState } from '@/types';
 
 const classes = bindQuotaClasses(
   Object.fromEntries(QUOTA_CLASS_KEYS.map((key) => [key, key])),
@@ -195,5 +196,71 @@ describe('ClaudeQuotaBody', () => {
     expect(markup).toContain('08-06 04:00');
     expect(markup).toMatch(/2 hours/);
     expect(markup).toMatch(/4 days/);
+  });
+});
+
+describe('CommandCodeQuotaBody', () => {
+  test('renders Gemini-style header and sub-telemetry row with usage', () => {
+    const quota: CommandCodeQuotaState = {
+      status: 'success',
+      quota: {
+        planId: 'individual-go',
+        status: 'active',
+        monthlyCap: 10,
+        monthlyCredits: 4.95,
+        currentPeriodEnd: new Date(now + 21 * DAY_MS).toISOString(),
+        fiveHour: {
+          cap: 3,
+          used: 0.17,
+          resetAt: now + 4 * HOUR_MS,
+        },
+        weekly: {
+          cap: 6,
+          used: 2.22,
+          resetAt: now + 5 * DAY_MS,
+        },
+      },
+    };
+    const markup = renderToStaticMarkup(createElement(CommandCodeQuotaBody, { quota, classes }));
+
+    expect(markup).toContain('5-Hour Limit');
+    expect(markup).toContain('Weekly Limit');
+    expect(markup).toContain('Monthly Credits');
+    expect(markup).toContain('quotaSubRow');
+    expect(markup).toContain('quotaSubDate');
+    expect(markup).toContain('Used US$0.17 / US$3.00');
+    expect(markup).toContain('Used US$2.22 / US$6.00');
+    expect(markup).toContain('Used US$5.05 / US$10.00');
+    expect(markup).toMatch(/4 hours/);
+    expect(markup).toMatch(/5 days/);
+    expect(markup).toMatch(/21 days/);
+  });
+
+  test('renders quota full and window ready when usage is zero', () => {
+    const quota: CommandCodeQuotaState = {
+      status: 'success',
+      quota: {
+        planId: 'individual-go',
+        status: 'active',
+        monthlyCap: 10,
+        monthlyCredits: 10,
+        fiveHour: {
+          cap: 3,
+          used: 0,
+          resetAt: null,
+        },
+        weekly: {
+          cap: 6,
+          used: 0,
+          resetAt: null,
+        },
+      },
+    };
+    const markup = renderToStaticMarkup(createElement(CommandCodeQuotaBody, { quota, classes }));
+
+    expect(markup).toContain('Quota full');
+    expect(markup).toContain('Window ready');
+    expect(markup).toContain('Cycle ready');
+    expect(markup).toContain('Used US$0.00 / US$3.00');
   });
 });
